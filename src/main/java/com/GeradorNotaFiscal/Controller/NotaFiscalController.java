@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notas-fiscais") // Adicionei /api para consistência
+@RequestMapping("/api/notas-fiscais")
 @CrossOrigin(origins = "http://localhost:5173")
 public class NotaFiscalController {
 
@@ -36,7 +36,7 @@ public class NotaFiscalController {
     @PutMapping("/{id}")
     public ResponseEntity<NotaFiscal> atualizar(@PathVariable Long id, @RequestBody NotaFiscal notaFiscal) {
         logger.info("Atualizando nota fiscal ID {}: {}", id, notaFiscal);
-        notaFiscal.setId(id); // Garante que o ID seja o mesmo
+        notaFiscal.setId(id);
         NotaFiscal atualizada = service.salvar(notaFiscal);
         return ResponseEntity.ok(atualizada);
     }

@@ -15,7 +15,7 @@ public class NotaFiscalService {
     private NotaFiscalRepository repository;
 
     public NotaFiscal salvar(NotaFiscal notaFiscal) {
-        // Adicione validação simples
+
         if(notaFiscal.getValor() <= 0) {
             throw new IllegalArgumentException("Valor deve ser positivo");
         }
@@ -24,7 +24,7 @@ public class NotaFiscalService {
 
     public List<NotaFiscal> listar() {
         List<NotaFiscal> todas = repository.findAll();
-        System.out.println("Total de notas no banco: " + todas.size()); // Log simples
+        System.out.println("Total de notas no banco: " + todas.size());
         return todas;
     }
 
@@ -41,7 +41,7 @@ public class NotaFiscalService {
         Optional<NotaFiscal> notaFiscalExistente = repository.findById(id);
         if (notaFiscalExistente.isPresent()) {
             NotaFiscal notaAtualizada = notaFiscalExistente.get();
-            // Atualiza os campos da nota fiscal
+
             if (notaFiscal.getCliente() != null) {
                 notaAtualizada.setCliente(notaFiscal.getCliente());
             }

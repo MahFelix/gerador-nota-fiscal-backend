@@ -19,7 +19,6 @@ public class NotaFiscal {
     private Double valor;
     private String dataEmissao;
 
-    // Getters padrão necessários
     public Long getId() {
         return id;
     }
@@ -52,7 +51,7 @@ public class NotaFiscal {
         this.dataEmissao = dataEmissao;
     }
 
-    // Corrigir o método setValor
+
     public void setValor(Double valor) {
         if (valor != null && valor > 0) {
             this.valor = valor;
