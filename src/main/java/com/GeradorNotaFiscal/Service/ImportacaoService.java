@@ -16,37 +16,48 @@ public class ImportacaoService {
     private String ultimoNomeTabela;
 
     public List<Map<String, Object>> processarArquivo(MultipartFile arquivo) throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(arquivo.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-            List<Map<String, Object>> dados = new ArrayList<>();
+        String nomeArquivo = arquivo.getOriginalFilename();
+        if (nomeArquivo == null) {
+            throw new IllegalArgumentException("Nome do arquivo está vazio.");
+        }
 
-            // Normalizar nome da tabela
-            String nomeTabela = normalizarNomeTabela(arquivo.getOriginalFilename());
-            ultimoNomeTabela = nomeTabela; // Salva o nome da tabela
+        if (nomeArquivo.endsWith(".xlsx")) {
+            try (Workbook workbook = new XSSFWorkbook(arquivo.getInputStream())) {
+                Sheet sheet = workbook.getSheetAt(0);
+                List<Map<String, Object>> dados = new ArrayList<>();
 
-            // Ler cabeçalhos
-            Row headerRow = sheet.getRow(0);
-            List<String> headers = new ArrayList<>();
-            for (Cell cell : headerRow) {
-                headers.add(cell.getStringCellValue().trim());
-            }
+                // Normalizar nome da tabela
+                String nomeTabela = normalizarNomeTabela(arquivo.getOriginalFilename());
+                ultimoNomeTabela = nomeTabela; // Salva o nome da tabela
 
-            // Ler dados
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                Map<String, Object> linha = new HashMap<>();
-                for (int j = 0; j < headers.size(); j++) {
-                    Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                    linha.put(headers.get(j), getCellValue(cell));
+                // Ler cabeçalhos
+                Row headerRow = sheet.getRow(0);
+                List<String> headers = new ArrayList<>();
+                for (Cell cell : headerRow) {
+                    headers.add(cell.getStringCellValue().trim());
                 }
-                dados.add(linha);
-            }
 
-            // Armazena a tabela processada
-            tabelas.put(nomeTabela, dados);
-            return dados;
+                // Ler dados
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    Map<String, Object> linha = new HashMap<>();
+                    for (int j = 0; j < headers.size(); j++) {
+                        Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                        linha.put(headers.get(j), getCellValue(cell));
+                    }
+                    dados.add(linha);
+                }
+
+                // Armazena a tabela processada
+                tabelas.put(nomeTabela, dados);
+                return dados;
+            }
+        } else if (nomeArquivo.endsWith(".csv")) {
+            return processarCSV(arquivo);
+        } else {
+            throw new IllegalArgumentException("Tipo de arquivo não suportado: " + nomeArquivo);
         }
     }
 
@@ -111,6 +122,67 @@ public class ImportacaoService {
 
     public String getUltimoNomeTabela() {
         return ultimoNomeTabela;
+    }
+
+
+    private List<Map<String, Object>> processarExcel(MultipartFile arquivo) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(arquivo.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<Map<String, Object>> dados = new ArrayList<>();
+
+            String nomeTabela = normalizarNomeTabela(arquivo.getOriginalFilename());
+            ultimoNomeTabela = nomeTabela;
+
+            Row headerRow = sheet.getRow(0);
+            List<String> headers = new ArrayList<>();
+            for (Cell cell : headerRow) {
+                headers.add(cell.getStringCellValue().trim());
+            }
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                Map<String, Object> linha = new HashMap<>();
+                for (int j = 0; j < headers.size(); j++) {
+                    Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    linha.put(headers.get(j), getCellValue(cell));
+                }
+                dados.add(linha);
+            }
+
+            tabelas.put(nomeTabela, dados);
+            return dados;
+        }
+    }
+
+
+    private List<Map<String, Object>> processarCSV(MultipartFile arquivo) throws IOException {
+        List<Map<String, Object>> dados = new ArrayList<>();
+
+        String nomeTabela = normalizarNomeTabela(arquivo.getOriginalFilename());
+        ultimoNomeTabela = nomeTabela;
+
+        try (Scanner scanner = new Scanner(arquivo.getInputStream())) {
+            if (!scanner.hasNextLine()) return dados;
+
+            String headerLine = scanner.nextLine();
+            String[] headers = headerLine.split(",");
+
+            while (scanner.hasNextLine()) {
+                String linha = scanner.nextLine();
+                String[] valores = linha.split(",", -1); // -1 mantém campos vazios
+
+                Map<String, Object> linhaMap = new HashMap<>();
+                for (int i = 0; i < headers.length; i++) {
+                    linhaMap.put(headers[i].trim(), i < valores.length ? valores[i].trim() : "");
+                }
+                dados.add(linhaMap);
+            }
+        }
+
+        tabelas.put(nomeTabela, dados);
+        return dados;
     }
 
 

@@ -27,7 +27,7 @@ public class ImportacaoController {
     public ResponseEntity<DadosImportacao> uploadArquivo(@RequestParam("arquivo") MultipartFile arquivo) {
         try {
             String nomeArquivo = arquivo.getOriginalFilename();
-            if (nomeArquivo == null || !nomeArquivo.endsWith(".xlsx")) {
+            if (nomeArquivo == null || !(nomeArquivo.endsWith(".xlsx") || nomeArquivo.endsWith(".csv"))) {
                 return ResponseEntity.badRequest().body(null);
             }
 
